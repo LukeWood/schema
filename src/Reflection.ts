@@ -1,5 +1,5 @@
 import { type, PrimitiveType, Context } from "./annotations";
-import { Schema } from "./Schema";
+import { Schema, encodeAll, decode, IStaticSchema } from "./Schema";
 import { ArraySchema } from "./types/ArraySchema";
 import { MapSchema } from "./types/MapSchema";
 
@@ -8,7 +8,7 @@ const reflectionContext = new Context();
 /**
  * Reflection
  */
-export class ReflectionField extends Schema {
+export class ReflectionField {
     @type("string", reflectionContext)
     name: string;
 
@@ -19,7 +19,7 @@ export class ReflectionField extends Schema {
     referencedType: number;
 }
 
-export class ReflectionType extends Schema {
+export class ReflectionType {
     @type("uint8", reflectionContext)
     id: number;
 
@@ -27,15 +27,15 @@ export class ReflectionType extends Schema {
     fields: ArraySchema<ReflectionField> = new ArraySchema<ReflectionField>();
 }
 
-export class Reflection extends Schema {
+export class Reflection {
     @type([ ReflectionType ], reflectionContext)
     types: ArraySchema<ReflectionType> = new ArraySchema<ReflectionType>();
 
     @type("uint8", reflectionContext)
     rootType: number;
 
-    static encode (instance: Schema) {
-        const rootSchemaType = instance.constructor as typeof Schema;
+    static encode (instance: any) {
+        const rootSchemaType = instance.constructor as IStaticSchema;
 
         const reflection = new Reflection();
         reflection.rootType = rootSchemaType._typeid;
@@ -100,17 +100,17 @@ export class Reflection extends Schema {
             buildType(type, types[typeid]._schema);
         }
 
-        return reflection.encodeAll();
+        return encodeAll(reflection);
     }
 
-    static decode (bytes: number[]): Schema {
+    static decode (bytes: number[]): any {
         const context = new Context();
 
         const reflection = new Reflection();
-        reflection.decode(bytes);
+        decode(reflection, bytes);
 
         let schemaTypes = reflection.types.reduce((types, reflectionType) => {
-            types[reflectionType.id] = class _ extends Schema {};
+            types[reflectionType.id] = class _ {};
             return types;
         }, {});
 

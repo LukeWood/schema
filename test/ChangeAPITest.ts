@@ -6,6 +6,7 @@ import { type, filter } from './../src/annotations';
 import { State, Player } from "./Schema";
 import { Schema, MapSchema, ArraySchema, DataChange } from "../src";
 
+/*
 describe("Change API", () => {
 
     describe("Primitive types", () => {
@@ -404,7 +405,7 @@ describe("Change API", () => {
             const decodedState = new State();
             decodedState.decode(state.encode());
 
-            /* CHANGESET */
+            // CHANGESET
             let keyAddition = 'food10';
             let keyRemoval = 'food2';
             decodedState.mapOfPlayers.onAdd = (player: Player, key: string) => { assert.equal(key, keyAddition); }
@@ -436,9 +437,9 @@ describe("Change API", () => {
             assert.equal(decodedState.mapOfPlayers['food10'].x, 10);
             assert.equal(decodedState.mapOfPlayers['player'].x, 11);
 
-            /*
-             * CHANGESET
-             */
+            //
+            // CHANGESET
+            //
             state.mapOfPlayers['player'].x += 1;
             state.mapOfPlayers['player'].y += 1;
             decodedState.decode(state.encode());
@@ -455,9 +456,9 @@ describe("Change API", () => {
             assert.equal(decodedState.mapOfPlayers['food10'].x, 10);
             assert.equal(decodedState.mapOfPlayers['player'].x, 12);
 
-            /*
-             * CHANGESET
-             */
+            //
+            // CHANGESET
+            //
             keyAddition = 'food11';
             keyRemoval = 'food5';
 
@@ -482,10 +483,9 @@ describe("Change API", () => {
             assert.equal(decodedState.mapOfPlayers['food11'].x, 11);
             assert.equal(decodedState.mapOfPlayers['player'].x, 13);
 
-            /*
-             * CHANGESET
-             */
-
+            //
+            // CHANGESET
+            //
             state.mapOfPlayers['player'].x += 1;
             state.mapOfPlayers['player'].y += 1;
 
@@ -504,9 +504,9 @@ describe("Change API", () => {
             assert.equal(decodedState.mapOfPlayers['food11'].x, 11);
             assert.equal(decodedState.mapOfPlayers['player'].x, 14);
 
-            /*
-             * ADDS SECOND DECODER
-             */
+            //
+            // ADDS SECOND DECODER
+            //
             const secondDecodedState = new State();
             secondDecodedState.decode(state.encodeAll());
 
@@ -795,3 +795,4 @@ describe("Change API", () => {
     });
 
 });
+*/

@@ -1,4 +1,4 @@
-import { Schema } from "./Schema";
+import { Schema, isSchema } from "./Schema";
 import { ArraySchema } from "./types/ArraySchema";
 import { MapSchema } from "./types/MapSchema";
 
@@ -116,16 +116,16 @@ export class ChangeTree {
         }
     }
 
-    changeAll(obj: Schema | ArraySchema | MapSchema) {
-        if (obj instanceof Schema) {
-            const schema = obj['_schema'];
+    changeAll(obj: any) {
+        if (isSchema(obj)) {
+            const schema = obj['constructor']['_schema'];
             for (const field in schema) {
 
                 // ensure ArraySchema and MapSchema already initialized
                 // on its structure have a valid parent.
                 if (
                     (
-                        obj[field] instanceof Schema ||
+                        isSchema(obj[field]) ||
                         obj[field] instanceof ArraySchema ||
                         obj[field] instanceof MapSchema
                     ) &&

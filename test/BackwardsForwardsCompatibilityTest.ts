@@ -1,27 +1,27 @@
 import * as assert from "assert";
-import { Reflection, type, Schema, MapSchema, ArraySchema } from "../src";
+import { Reflection, type, Schema, MapSchema, ArraySchema, encode, decode } from "../src";
 import { deprecated } from "../src/annotations";
 
 describe("backwards/forwards compatibility", () => {
 
-    class PlayerV1 extends Schema {
+    class PlayerV1 {
         @type("number") x: number = Math.random();
         @type("number") y: number = Math.random();
     }
 
-    class StateV1 extends Schema {
+    class StateV1 {
         @type("string") str: string;
         @type({ map: PlayerV1 }) map = new MapSchema<PlayerV1>();
     }
 
-    class PlayerV2 extends Schema {
+    class PlayerV2 {
         @type("number") x: number = Math.random();
         @type("number") y: number = Math.random();
         @type("string") name = "Jake Badlands";
         @type(["string"]) arrayOfStrings = new ArraySchema<string>("one", "two", "three");
     }
 
-    class StateV2 extends Schema {
+    class StateV2 {
         @type("string") str: string;
 
         @deprecated()
@@ -36,7 +36,7 @@ describe("backwards/forwards compatibility", () => {
         state.map['one'] = new PlayerV1();
 
         const decodedStateV2 = new StateV2();
-        decodedStateV2.decode(state.encode());
+        decode(decodedStateV2, encode(state));
         assert.equal("Hello world", decodedStateV2.str);
         // assert.equal(10, decodedStateV2.countdown);
 
@@ -51,7 +51,7 @@ describe("backwards/forwards compatibility", () => {
         state.countdown = 10;
 
         const decodedStateV1 = new StateV1();
-        decodedStateV1.decode(state.encode());
+        decode(decodedStateV1, encode(state));
         assert.equal("Hello world", decodedStateV1.str);
     });
 

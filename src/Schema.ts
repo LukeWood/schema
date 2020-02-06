@@ -17,6 +17,22 @@ export interface DataChange<T=any> {
     previousValue: T;
 }
 
+export interface IStaticSchema {
+    new (...args: any[]): any;
+    _context: Context;
+    _typeid: number;
+    _schema: Definition;
+    _indexes: {[field: string]: number};
+    _fieldsByIndex: {[index: number]: string};
+    _filters: {[field: string]: FilterCallback};
+    _deprecated: {[field: string]: boolean};
+    _descriptors: PropertyDescriptorMap & ThisType<any>;
+}
+
+export function isSchema (instance: any) {
+    return instance && instance.constructor._schema;
+}
+
 class EncodeSchemaError extends Error {}
 
 function assertType(value: any, type: string, klass: Schema, field: string) {
@@ -103,18 +119,6 @@ function createTypeInstance(context: Context, bytes: number[], it: decoding.Iter
     }
 }
 
-export interface IStaticSchema {
-    new (...args: any[]): any;
-    _context: Context;
-    _typeid: number;
-    _schema: Definition;
-    _indexes: {[field: string]: number};
-    _fieldsByIndex: {[index: number]: string};
-    _filters: {[field: string]: FilterCallback};
-    _deprecated: {[field: string]: boolean};
-    _descriptors: PropertyDescriptorMap & ThisType<any>;
-}
-
 export function encode(instance: any, root: any = instance, encodeAll = false, client?: Client, bytes: number[] = []) {
     const $changes: ChangeTree = instance.$changes;
 
@@ -134,7 +138,7 @@ export function encode(instance: any, root: any = instance, encodeAll = false, c
             : $changes.changes
     ).sort();
 
-    console.log({ schema, indexes, fieldsByIndex, changes });
+    // console.log({ schema, indexes, fieldsByIndex, changes });
 
     for (let i = 0, l = changes.length; i < l; i++) {
         const field = fieldsByIndex[changes[i]] || changes[i] as string;
@@ -146,7 +150,7 @@ export function encode(instance: any, root: any = instance, encodeAll = false, c
         const value = instance[_field];
         const fieldIndex = indexes[field];
 
-        console.log("ENCODING", { field, type, fieldIndex, value });
+        // console.log("ENCODING", { field, type, fieldIndex, value });
 
         if (value === undefined) {
             encoding.uint8(bytes, NIL);
@@ -488,7 +492,7 @@ export function decode(instance: any, bytes: number[], it: decoding.Iterator = {
 
                 let isNew = (!hasIndexChange && value[newIndex] === undefined) || (hasIndexChange && indexChangedFrom === undefined);
 
-                if ((type as any).prototype instanceof Schema) {
+                if (type['_schema']) { // is a reference to Schema?
                     let item: Schema;
 
                     if (isNew) {
@@ -658,7 +662,23 @@ export function decode(instance: any, bytes: number[], it: decoding.Iterator = {
 
     // this._triggerChanges(changes);
 
-    return this;
+    return instance;
+}
+
+
+export function toJSON(instance) {
+    const schema = instance._schema;
+    const deprecated = instance._deprecated;
+
+    const obj = {}
+    for (let field in schema) {
+        if (!deprecated[field] && instance[field] !== null && typeof (instance[field]) !== "undefined") {
+            obj[field] = (isSchema(instance[field]))
+                ? toJSON(instance[field])
+                : instance[`_${field}`];
+        }
+    }
+    return obj;
 }
 
 export function discardAllChanges(instance: any) {
@@ -697,7 +717,7 @@ export function discardAllChanges(instance: any) {
                 const key = mapKeys[keys[i]] || keys[i];
                 const item = instance[`_${field}`][key];
 
-                if (item instanceof Schema && item) {
+                if (isSchema(item)) {
                     discardAllChanges(item);
                 }
             }
@@ -792,22 +812,6 @@ export abstract class Schema {
             Schema.onError(e);
         }
     }
-
-    toJSON () {
-        const schema = this._schema;
-        const deprecated = this._deprecated;
-
-        const obj = {}
-        for (let field in schema) {
-            if (!deprecated[field] && this[field] !== null && typeof (this[field]) !== "undefined") {
-                obj[field] = (typeof (this[field].toJSON) === "function")
-                    ? this[field].toJSON()
-                    : this[`_${field}`];
-            }
-        }
-        return obj;
-    }
-
 
     private _triggerChanges(changes: DataChange[]) {
         if (changes.length > 0) {

@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import { State, Player } from "./Schema";
-import { ArraySchema, MapSchema } from "../src";
+import { ArraySchema, MapSchema, encode } from "../src";
 import { IS_COVERAGE } from "./helpers/test_helpers";
 
 const getRandomNumber = (max: number = 2000) => Math.floor(Math.random() * max);
@@ -31,13 +31,13 @@ describe("Performance", () => {
             }
         }, `inserting ${totalItems} items to array`, 1500); // 1200, TODO: improve this!
 
-        assertExecutionTime(() => state.encode(), `encoding ${totalItems} array entries`, 250); // 190
+        assertExecutionTime(() => encode(state), `encoding ${totalItems} array entries`, 250); // 190
 
         const player: Player = state.arrayOfPlayers[Math.round(totalItems / 2)];
         player.x = getRandomNumber();
         player.y = getRandomNumber();
 
-        assertExecutionTime(() => state.encode(), "encoding a single array item change", 5);
+        assertExecutionTime(() => encode(state), "encoding a single array item change", 5);
     });
 
     it("MapSchema", function (){
@@ -54,13 +54,13 @@ describe("Performance", () => {
             }
         }, `inserting ${totalItems} items to map`, 3500); // 2700, TODO: improve this value!
 
-        assertExecutionTime(() => state.encode(), `encoding ${totalItems} map entries`, 300); // 150
+        assertExecutionTime(() => encode(state), `encoding ${totalItems} map entries`, 300); // 150
 
         const player: Player = state.mapOfPlayers[`player${Math.floor(totalItems / 2)}`];
         player.x = getRandomNumber();
         player.y = getRandomNumber();
 
         // TODO: improve this value
-        assertExecutionTime(() => state.encode(), "encoding a single map item change", 30); // 15
+        assertExecutionTime(() => encode(state), "encoding a single map item change", 30); // 15
     });
 });

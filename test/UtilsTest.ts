@@ -1,7 +1,7 @@
 import * as assert from "assert";
 
 import { State, Player } from "./Schema";
-import { MapSchema, dumpChanges, ArraySchema } from "../src";
+import { MapSchema, dumpChanges, ArraySchema, encode } from "../src";
 
 describe("Utils", () => {
 
@@ -14,7 +14,7 @@ describe("Utils", () => {
         assert.ok(dump.mapOfPlayers.one);
 
         // discard changes
-        state.encode();
+        encode(state);
 
         delete state.mapOfPlayers['one'];
         dump = dumpChanges(state);
@@ -33,7 +33,7 @@ describe("Utils", () => {
         assert.ok(dump.arrayOfPlayers[1]);
 
         // discard changes
-        state.encode();
+        encode(state);
 
         state.arrayOfPlayers.splice(1);
         dump = dumpChanges(state);

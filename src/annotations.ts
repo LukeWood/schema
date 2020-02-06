@@ -1,5 +1,5 @@
 import { ChangeTree } from './ChangeTree';
-import { Schema } from './Schema';
+import { Schema, IStaticSchema } from './Schema';
 
 export type Constructor<T> = new (...args:any[]) => T;
 
@@ -109,7 +109,12 @@ export function type (type: DefinitionType, context: Context = globalContext): P
             Object.defineProperty(target, "$changes", {
                 get: function () {
                     if (!this.$$changes) {
-                        this.$$changes = new ChangeTree(constructor._indexes);
+                        Object.defineProperty(this, "$$changes", {
+                            value: new ChangeTree(constructor._indexes),
+                            enumerable: false,
+                            configurable: false,
+                            writable: true,
+                        });
                     }
                     return this.$$changes;
                 },
@@ -301,7 +306,7 @@ export function deprecated(throws: boolean = true, context: Context = globalCont
     }
 }
 
-export function defineTypes(target: typeof Schema, fields: {[property: string]: DefinitionType}, context: Context = globalContext) {
+export function defineTypes(target: any, fields: {[property: string]: DefinitionType}, context: Context = globalContext) {
     for (let field in fields) {
         type(fields[field], context)(target.prototype, field);
     }

@@ -1,25 +1,24 @@
 import * as assert from "assert";
-import { Reflection, Schema, type, MapSchema, ArraySchema, Context } from "../src";
+import { Reflection, Schema, type, MapSchema, ArraySchema, Context, encode, encodeAll, decode } from "../src";
 
 const testContext = new Context();
 
 /**
  * No filters example
  */
-class Player extends Schema {
+class Player {
   @type("string", testContext) name: string;
   @type("number", testContext) x: number;
   @type("number", testContext) y: number;
 
   constructor (name?: string, x?: number, y?: number) {
-    super();
     this.name = name;
     this.x = x;
     this.y = y;
   }
 }
 
-export class State extends Schema {
+export class State {
   @type('string', testContext) fieldString: string;
   @type('number', testContext) fieldNumber: number;
   @type(Player, testContext) player: Player;
@@ -33,7 +32,7 @@ describe("Reflection", () => {
         const state = new State();
         const reflected = new Reflection();
         assert.equal(
-            JSON.stringify(reflected.decode(Reflection.encode(state))),
+            JSON.stringify(decode(reflected, Reflection.encode(state))),
             '{"types":[{"id":0,"fields":[{"name":"name","type":"string"},{"name":"x","type":"number"},{"name":"y","type":"number"}]},{"id":1,"fields":[{"name":"fieldString","type":"string"},{"name":"fieldNumber","type":"number"},{"name":"player","type":"ref","referencedType":0},{"name":"arrayOfPlayers","type":"array","referencedType":0},{"name":"mapOfPlayers","type":"map","referencedType":0}]}],"rootType":1}'
         );
     });
@@ -62,7 +61,7 @@ describe("Reflection", () => {
         })
         state.arrayOfPlayers = new ArraySchema(new Player("in array", 4, 4));
 
-        stateReflected.decode(state.encode());
+        decode(stateReflected, encode(state));
 
         assert.equal(stateReflected.fieldString, "Hello world!");
         assert.equal(stateReflected.fieldNumber, 10);
@@ -86,12 +85,11 @@ describe("Reflection", () => {
     });
 
     it("should allow extending another Schema type", () => {
-        class Point extends Schema {
+        class Point {
             @type("number") x: number;
             @type("number") y: number;
 
             constructor (x: number, y: number) {
-                super();
                 this.x = x;
                 this.y = y;
             }
@@ -106,7 +104,7 @@ describe("Reflection", () => {
             }
         }
 
-        class MyState extends Schema {
+        class MyState {
             @type([ Point ])
             points = new ArraySchema<Point>();
 
@@ -123,7 +121,7 @@ describe("Reflection", () => {
     });
 
     it("should reflect map of primitive type", () => {
-        class MyState extends Schema {
+        class MyState {
             @type({map: "string"})
             mapOfStrings: MapSchema<string> = new MapSchema();
         }
@@ -133,13 +131,13 @@ describe("Reflection", () => {
 
         state.mapOfStrings['one'] = "one";
         state.mapOfStrings['two'] = "two";
-        decodedState.decode(state.encode());
+        decode(decodedState, encode(state));
 
         assert.equal(JSON.stringify(decodedState), '{"mapOfStrings":{"one":"one","two":"two"}}');
     });
 
     it("should reflect array of primitive type", () => {
-        class MyState extends Schema {
+        class MyState {
             @type([ "string" ])
             arrayOfStrings: ArraySchema<string> = new ArraySchema();
         }
@@ -149,13 +147,13 @@ describe("Reflection", () => {
 
         state.arrayOfStrings.push("one")
         state.arrayOfStrings.push("two");
-        decodedState.decode(state.encode());
+        decode(decodedState, encode(state));
 
         assert.equal(JSON.stringify(decodedState), '{"arrayOfStrings":["one","two"]}');
     });
 
     it("should reflect and be able to use multiple structures of primitive tyes", () => {
-        class MyState extends Schema {
+        class MyState {
             @type("string")
             currentTurn: string;
 
@@ -179,10 +177,10 @@ describe("Reflection", () => {
         state.players['one'] = 1;
 
         const decodedState = Reflection.decode(Reflection.encode(state)) as MyState;
-        decodedState.decode(state.encodeAll());
+        decode(decodedState, encodeAll(state));
 
         const decodedState2 = Reflection.decode(Reflection.encode(state)) as MyState;
-        decodedState2.decode(state.encodeAll());
+        decode(decodedState2, encodeAll(state));
 
         assert.equal(JSON.stringify(decodedState),  '{"currentTurn":"one","players":{"one":1},"board":[0,0,0,0,0,0,0,0,0]}');
         assert.equal(JSON.stringify(decodedState2), '{"currentTurn":"one","players":{"one":1},"board":[0,0,0,0,0,0,0,0,0]}');

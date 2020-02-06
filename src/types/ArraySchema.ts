@@ -1,5 +1,4 @@
 import { ChangeTree } from "../ChangeTree";
-import { Schema } from "../Schema";
 
 export class ArraySchema<T=any> extends Array<T> {
     protected $sorting: boolean;
@@ -59,7 +58,8 @@ export class ArraySchema<T=any> extends Array<T> {
                     } else {
                         cloned = new ArraySchema(...this.map(item => {
                             if (typeof (item) === "object") {
-                                return (item as any as Schema).clone();
+                                return item;
+                                // return (item as any as Schema).clone();
                             } else {
                                 return item;
                             }

@@ -1,11 +1,11 @@
 import * as assert from "assert";
 import { type, Context } from "../src/annotations";
-import { ArraySchema, MapSchema, Reflection } from "../src";
+import { ArraySchema, MapSchema, Reflection, encode, encodeAll, decode } from "../src";
 import { Schema } from "../src/Schema";
 
 const context = new Context();
 
-class Entity extends Schema {
+class Entity {
     @type("number", context) x: number;
     @type("number", context) y: number;
 }
@@ -19,11 +19,11 @@ class Enemy extends Player {
     @type("number", context) power: number;
 }
 
-class EntityHolder extends Schema {
+class EntityHolder {
     @type(Entity, context) entity: Entity;
 }
 
-class State extends Schema {
+class State {
     @type(Entity, context) entity: Entity;
     @type(EntityHolder, context) entityHolder = new EntityHolder();
     @type([ Entity ], context) arrayOfEntities = new ArraySchema<Entity>();
@@ -61,25 +61,25 @@ describe("Polymorphism", () => {
         state.entityHolder.entity = createPlayer();
 
         const decodedState = new State();
-        decodedState.decode(state.encodeAll());
+        decode(decodedState, encodeAll(state));
         assert.ok(decodedState.entityHolder.entity instanceof Player);
         assert.ok(decodedState.entityHolder.entity instanceof Entity);
 
         const decodedReflectedState: any = Reflection.decode(Reflection.encode(state));
-        decodedReflectedState.decode(state.encodeAll());
+        decodedReflectedState.decode(encodeAll(state));
         assert.equal(decodedReflectedState.entityHolder.entity.x, 100);
         assert.equal(decodedReflectedState.entityHolder.entity.y, 200);
         assert.equal(decodedReflectedState.entityHolder.entity.name, "Jake");
         assert.equal(decodedReflectedState.entityHolder.entity.lvl, 5);
 
         state.entityHolder.entity = null;
-        decodedState.decode(state.encodeAll());
+        decode(decodedState, encodeAll(state));
 
         assert.ok(!decodedState.entityHolder.entity);
 
         state.entityHolder.entity = createEnemy();
 
-        decodedState.decode(state.encodeAll());
+        decode(decodedState, encodeAll(state));
         assert.ok(decodedState.entityHolder.entity instanceof Enemy);
         assert.ok(decodedState.entityHolder.entity instanceof Entity);
     });
@@ -91,13 +91,13 @@ describe("Polymorphism", () => {
         state.arrayOfEntities.push(createEnemy());
 
         const decodedState = new State();
-        decodedState.decode(state.encodeAll());
+        decode(decodedState, encodeAll(state));
         assert.ok(decodedState.arrayOfEntities[0] instanceof Entity);
         assert.ok(decodedState.arrayOfEntities[1] instanceof Player);
         assert.ok(decodedState.arrayOfEntities[2] instanceof Enemy);
 
         state.arrayOfEntities.push(createPlayer());
-        decodedState.decode(state.encode());
+        decode(decodedState, encode(state));
 
         assert.ok(decodedState.arrayOfEntities[3] instanceof Entity);
         assert.ok(decodedState.arrayOfEntities[3] instanceof Player);
@@ -110,25 +110,25 @@ describe("Polymorphism", () => {
         state.mapOfEntities['enemy'] = createEnemy();
 
         const decodedState = new State();
-        decodedState.decode(state.encodeAll());
+        decode(decodedState, encodeAll(state));
         assert.ok(decodedState.mapOfEntities['entity'] instanceof Entity);
         assert.ok(decodedState.mapOfEntities['player'] instanceof Player);
         assert.ok(decodedState.mapOfEntities['enemy'] instanceof Enemy);
 
         state.mapOfEntities['player-2'] = createPlayer();
-        decodedState.decode(state.encode());
+        decode(decodedState, encode(state));
         assert.ok(decodedState.mapOfEntities['player-2'] instanceof Entity);
         assert.ok(decodedState.mapOfEntities['player-2'] instanceof Player);
     });
 
     it("should allow generics", () => {
-        abstract class BaseConfig extends Schema {
+        class BaseConfig {
             @type("string") default: string = "default";
         }
         class ConcreteConfig extends BaseConfig {
             @type("number") specific: number = 0;
         }
-        class GameRoomState<RoomConfigType extends BaseConfig = any> extends Schema {
+        class GameRoomState<RoomConfigType extends BaseConfig = any> {
             @type(BaseConfig)
             roomConfig: RoomConfigType;
         }
@@ -138,7 +138,7 @@ describe("Polymorphism", () => {
         state.roomConfig.specific = 20;
 
         const decodedState = new GameRoomState<ConcreteConfig>();
-        decodedState.decode(state.encode());
+        decode(decodedState, encode(state));
 
         assert.equal("default", decodedState.roomConfig.default);
         assert.equal(20, decodedState.roomConfig.specific);

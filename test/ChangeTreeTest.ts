@@ -21,19 +21,19 @@ describe("ChangeTree", () => {
     });
 
     it("should not identify changes on untyped properties", () => {
-        class Game extends Schema {
+        class Game {
             @type('string')
             state: string = "starting";
             privProperty: number = 50;
         }
 
-        class State extends Schema {
+        class State {
             @type(Game)
             game: Game;
         }
 
         const state = new State();
-        state.game = new Game(0, 1);
+        state.game = new Game();
 
         const changes: ChangeTree = (state.game as any).$changes;
         assert.deepEqual(Array.from(changes.changes), [0])

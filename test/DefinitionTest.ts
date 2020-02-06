@@ -1,17 +1,17 @@
 import * as assert from "assert";
 
-import { Schema, type, MapSchema } from "../src";
+import { Schema, type, MapSchema, encode, decode } from "../src";
 import { defineTypes } from "../src/annotations";
 
 describe("Definition", () => {
 
     it("private Schema fields should be part of enumerable keys", () => {
-        class Player extends Schema {
+        class Player {
             @type("number") x: number;
             @type("number") y: number;
             somethingPrivate: number = 10;
         }
-        class MySchema extends Schema {
+        class MySchema {
             @type("string")
             str: string;
 
@@ -30,7 +30,7 @@ describe("Definition", () => {
     });
 
     it("should allow a Schema instance with no fields", () => {
-        class IDontExist extends Schema {}
+        class IDontExist {}
 
         const obj = new IDontExist();
         assert.deepEqual(Object.keys(obj), []);
@@ -38,14 +38,14 @@ describe("Definition", () => {
 
     describe("defineTypes", () => {
         it("should be equivalent", () => {
-            class MyExistingStructure extends Schema {}
+            class MyExistingStructure {}
             defineTypes(MyExistingStructure, { name: "string" });
 
             const state = new MyExistingStructure();
             (state as any).name = "hello world!";
 
             const decodedState = new MyExistingStructure();
-            decodedState.decode(state.encode());
+            decode(decodedState, encode(state));
             assert.equal((decodedState as any).name, "hello world!");
         });
     });
