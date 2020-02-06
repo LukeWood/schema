@@ -1,9 +1,10 @@
-import { Schema, type, ArraySchema, MapSchema, filter } from "../src";
+import { Schema, type, ArraySchema, MapSchema, filter, Definition } from "../src";
+import { ChangeTree } from "../src/ChangeTree";
 
 /**
  * No filters example
  */
-export class Player extends Schema {
+export class Player {
   @type("string")
   name: string;
 
@@ -14,14 +15,13 @@ export class Player extends Schema {
   y: number;
 
   constructor (name?: string, x?: number, y?: number) {
-    super();
     this.name = name;
     this.x = x;
     this.y = y;
   }
 }
 
-export class State extends Schema {
+export class State {
   @type('string')
   fieldString: string;
 
@@ -41,25 +41,24 @@ export class State extends Schema {
 /**
  * Deep example
  */
-export class Position extends Schema {
+export class Position {
   @type("float32") x: number;
   @type("float32") y: number;
   @type("float32") z: number;
 
   constructor (x: number, y: number, z: number) {
-    super();
     this.x = x;
     this.y = y;
     this.z = z;
   }
 }
 
-export class Another extends Schema {
+export class Another {
   @type(Position)
   position: Position = new Position(0, 0, 0);
 }
 
-export class DeepEntity extends Schema {
+export class DeepEntity {
   @type("string")
   name: string;
 
@@ -70,17 +69,17 @@ export class DeepEntity extends Schema {
 export class DeepEntity2 extends DeepEntity {
 }
 
-export class DeepChild extends Schema {
+export class DeepChild {
   @type(DeepEntity)
   entity = new DeepEntity();
 }
 
-export class DeepMap extends Schema {
+export class DeepMap {
   @type([DeepChild])
   arrayOfChildren = new ArraySchema<DeepChild>();
 }
 
-export class DeepState extends Schema {
+export class DeepState {
   @type({ map: DeepMap })
   map = new MapSchema<DeepMap>();
 }
@@ -89,12 +88,12 @@ export class DeepState extends Schema {
 /**
  * Filters example
  */
-export class Inventory extends Schema {
+export class Inventory {
   @type("number")
   items: number;
 }
 
-export class Unit extends Schema {
+export class Unit {
   @type("number")
   x: number;
 
@@ -108,7 +107,7 @@ export class Unit extends Schema {
   inventory: Inventory;
 }
 
-export class Bullet extends Schema {
+export class Bullet {
   @type("number")
   x: number;
 
@@ -127,7 +126,7 @@ const filters = {
   }
 }
 
-export class StateWithFilter extends Schema {
+export class StateWithFilter {
   @type("string")
   unfilteredString: string;
 

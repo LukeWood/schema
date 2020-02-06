@@ -39,6 +39,13 @@ export class ChangeTree {
         const fieldIndex = this.fieldIndexes[fieldName];
         const field = (typeof(fieldIndex) === "number") ? fieldIndex : fieldName;
 
+        console.log("TRIGGERING A CHANGE", { fieldName, isDelete, fieldIndex, field });
+        try {
+            throw new Error("CHANGE");
+        } catch (e){
+            console.log(e.stack);
+        }
+
         if (!isDelete) {
             this.changed = true;
             this.changes.add(field);

@@ -1,6 +1,8 @@
 import { ChangeTree } from './ChangeTree';
 import { Schema } from './Schema';
 
+export type Constructor<T> = new (...args:any[]) => T;
+
 /**
  * Data types
  */
@@ -18,14 +20,14 @@ export type PrimitiveType =
     "uint64" |
     "float32" |
     "float64" |
-    typeof Schema;
+    Constructor<any>;
 
 export type DefinitionType = ( PrimitiveType | PrimitiveType[] | { map: PrimitiveType });
 export type Definition = { [field: string]: DefinitionType };
 export type FilterCallback<
-    T extends Schema = any,
+    T = any,
     V = any,
-    R extends Schema = any
+    R = any
 > = (this: T, client: Client, value: V, root?: R) => boolean;
 
 // Colyseus integration
@@ -97,13 +99,31 @@ export function type (type: DefinitionType, context: Context = globalContext): P
 
         const fieldCached = `_${field}`;
 
-        constructor._descriptors[fieldCached] = {
+        Object.defineProperty(target, fieldCached, {
             enumerable: false,
             configurable: false,
             writable: true,
-        };
+        });
 
-        constructor._descriptors[field] = {
+        if (!Object.getOwnPropertyDescriptor(target, "$changes")) {
+            Object.defineProperty(target, "$changes", {
+                get: function () {
+                    if (!this.$$changes) {
+                        this.$$changes = new ChangeTree(constructor._indexes);
+                    }
+                    return this.$$changes;
+                },
+
+                set: function (this: any, value: any) {
+                    this.$$changes = value;
+                },
+
+                enumerable: false,
+                configurable: false,
+            });
+        }
+
+        Object.defineProperty(target, field, {
             get: function () {
                 return this[fieldCached];
             },
@@ -133,7 +153,10 @@ export function type (type: DefinitionType, context: Context = globalContext): P
                                 //     obj._indexes.delete(prop);
                                 // }
 
-                                if (setValue instanceof Schema) {
+                                // (THIS IS NEW)
+                                // if (setValue instanceof Schema) {
+                                if (setValue && setValue['constructor']._schema) {
+
                                     // new items are flagged with all changes
                                     if (!setValue.$changes.parent) {
                                         setValue.$changes = new ChangeTree(setValue._indexes, key, obj.$changes);
@@ -234,7 +257,7 @@ export function type (type: DefinitionType, context: Context = globalContext): P
 
             enumerable: true,
             configurable: true
-        };
+        });
     }
 }
 
@@ -242,7 +265,7 @@ export function type (type: DefinitionType, context: Context = globalContext): P
  * `@filter()` decorator for defining data filters per client
  */
 
-export function filter<T extends Schema, V extends Schema, R extends Schema>(cb: FilterCallback<T, V, R>): PropertyDecorator {
+export function filter<T, V, R>(cb: FilterCallback<T, V, R>): PropertyDecorator {
     return function (target: any, field: string) {
         const constructor = target.constructor as typeof Schema;
 

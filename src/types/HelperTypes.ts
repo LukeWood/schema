@@ -1,3 +1,15 @@
+/**
+ * Extension types
+ */
+export interface StaticExtensionType {
+    defineSetterProxy();
+    defineGetterProxy();
+};
+
+/**
+ * listen() Utility
+ * ---------------
+ */
 type Bool = 'true' | 'false'
 type Key = string | number | symbol;
 

@@ -1,4 +1,9 @@
-export { Schema, DataChange } from "./Schema";
+export {
+    Schema,
+    DataChange,
+    encode, encodeAll, encodeAllFiltered, encodeFiltered,
+    decode,
+} from "./Schema";
 export { MapSchema } from "./types/MapSchema";
 export { ArraySchema } from "./types/ArraySchema";
 
